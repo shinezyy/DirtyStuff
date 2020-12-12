@@ -42,7 +42,8 @@ class SimulatorTask:
                 self.dict_options[k] = v
 
     def add_list_options(self, options: list):
-        self.list_options.add(options)
+        for x in options:
+            self.list_options.add(x)
 
     def format_options(self):
         self.final_options = self.direct_options
@@ -80,11 +81,23 @@ class SimulatorTask:
         os.chdir(self.work_dir)
 
         cmd = sh.Command(self.exe)
-        cmd(
-            _out=osp.join(self.log_dir, 'simulator_out.txt'),
-            _err=osp.join(self.log_dir, 'simulator_err.txt'),
-            *self.final_options
-        )
+
+        sh.touch(osp.join(self.log_dir, 'running'))
+        try:
+            cmd(
+                _out=osp.join(self.log_dir, 'simulator_out.txt'),
+                _err=osp.join(self.log_dir, 'simulator_err.txt'),
+                *self.final_options
+            )
+        except Exception as e:
+            print(e)
+            sh.rm(osp.join(self.log_dir, 'running'))
+            sh.touch(osp.join(self.log_dir, 'aborted'))
+            return
+
+        sh.rm(osp.join(self.log_dir, 'running'))
+        sh.touch(osp.join(self.log_dir, 'completed'))
+        return
 
 
 def task_wrapper(task: SimulatorTask):

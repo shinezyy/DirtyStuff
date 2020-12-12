@@ -7,6 +7,7 @@ from multiprocessing import Pool
 
 from common.SimulatorTask import SimulatorTask, task_wrapper
 from common.TaskTree import task_tree_to_batch_task
+from Gem5Tasks.TypicalO3Config import TypicalO3Config
 
 
 TaskSummary = {}
@@ -38,7 +39,7 @@ def find_task(d: str):
 task_tree = find_task(data_dir)
 # pprint(task_tree)
 
-tasks = task_tree_to_batch_task(task_tree, exe, top_output_dir, 'gem5_run_spec06_cpt')
+tasks = task_tree_to_batch_task(TypicalO3Config, task_tree, exe, top_output_dir, 'gem5_ooo_run_spec06_cpt')
 for task in tasks:
     # task.dry_run = True
     task.sub_workload_level_path_format()
@@ -52,19 +53,22 @@ for task in tasks:
         '--generic-rv-cpt': cpt_file,
         # '--benchmark-stdout': osp.join(task.log_dir, 'workload_out.txt'),
         # '--benchmark-stderr': osp.join(task.log_dir, 'workload_err.txt'),
-        '--maxinsts': str(50*10**6),
+        '--maxinsts': str(50*10**4),
     })
     task.format_options()
 
-p = Pool(40)
+debug = True
 
-results = p.imap(task_wrapper, tasks, chunksize=1)
-count = 0
-for res in results:
-    print(res)
-    count += 1
+if debug:
+    task_wrapper(tasks[0])
+else:
+    p = Pool(40)
 
-print(f'Finished {count} simulations')
-p.close()
+    results = p.imap(task_wrapper, tasks, chunksize=1)
+    count = 0
+    for res in results:
+        print(res)
+        count += 1
 
-# task_wrapper(tasks[0])
+    print(f'Finished {count} simulations')
+    p.close()
