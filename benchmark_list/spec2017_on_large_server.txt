@@ -1,0 +1,12 @@
+gcc
+mcf
+xz
+omnetpp
+cactuBSSN
+perlbench
+xalancbmk
+lbm
+blender
+namd
+bwaves
+deepsjeng

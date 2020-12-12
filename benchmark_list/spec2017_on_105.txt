@@ -1,0 +1,6 @@
+roms
+exchange2
+povray
+parest
+wrf
+imagick
