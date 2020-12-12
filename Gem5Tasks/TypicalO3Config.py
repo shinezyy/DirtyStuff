@@ -8,7 +8,7 @@ class TypicalO3Config(SimulatorTask):
         self.window_size = 192
 
         self.add_direct_options([
-            '--debug-flags=AddrRanges,Fault,Commit,ExecAll',
+            # '--debug-flags=AddrRanges,Fault,Commit,Fetch,Cache,IEW,MemoryAccess,LSQ,LSQUnit,TLBVerbose',
         ])
 
         self.list_conf = [

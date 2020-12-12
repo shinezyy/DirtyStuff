@@ -53,11 +53,11 @@ for task in tasks:
         '--generic-rv-cpt': cpt_file,
         # '--benchmark-stdout': osp.join(task.log_dir, 'workload_out.txt'),
         # '--benchmark-stderr': osp.join(task.log_dir, 'workload_err.txt'),
-        '--maxinsts': str(50*10**4),
+        '--maxinsts': str(50*10**6),
     })
     task.format_options()
 
-debug = True
+debug = False
 
 if debug:
     task_wrapper(tasks[0])

@@ -82,6 +82,9 @@ class SimulatorTask:
 
         cmd = sh.Command(self.exe)
 
+        sh.rm(['-f', osp.join(self.log_dir, 'aborted')])
+        sh.rm(['-f', osp.join(self.log_dir, 'completed')])
+
         sh.touch(osp.join(self.log_dir, 'running'))
         try:
             cmd(
