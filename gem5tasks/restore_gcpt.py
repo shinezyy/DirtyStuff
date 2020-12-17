@@ -5,16 +5,16 @@ import os.path as osp
 from pprint import pprint
 from multiprocessing import Pool
 
-from common.SimulatorTask import SimulatorTask, task_wrapper
-from common.TaskTree import task_tree_to_batch_task
-from Gem5Tasks.TypicalO3Config import TypicalO3Config
+from common.simulator_task import SimulatorTask, task_wrapper
+from common.task_tree import task_tree_to_batch_task
+from gem5tasks.typical_o3_config import TypicalO3Config
 
 
 TaskSummary = {}
 
-exe = '/home/zyy/projects/DirtyStuff/gem5.opt'
+exe = '/home51/zyy/local_storage/gem5.opt'
 data_dir = '/home51/zyy/projects/NEMU/outputs3/take_simpoint_checkpoint_06' # cpt dir
-top_output_dir = '/home51/zyy/projects/NEMU/outputs3' # cpt dir
+top_output_dir = '/home51/zyy/projects/NEMU/outputs4' # cpt dir
 cpt_dir_pattern = re.compile(r'\d+')
 
 
@@ -53,7 +53,8 @@ for task in tasks:
         '--generic-rv-cpt': cpt_file,
         # '--benchmark-stdout': osp.join(task.log_dir, 'workload_out.txt'),
         # '--benchmark-stderr': osp.join(task.log_dir, 'workload_err.txt'),
-        '--maxinsts': str(50*10**6),
+        '--maxinsts': str(2*10**6),
+        '--gcpt-warmup': str(1*10**6),
     })
     task.format_options()
 
@@ -62,7 +63,7 @@ debug = False
 if debug:
     task_wrapper(tasks[0])
 else:
-    p = Pool(40)
+    p = Pool(1)
 
     results = p.imap(task_wrapper, tasks, chunksize=1)
     count = 0

@@ -1,4 +1,4 @@
-from common.SimulatorTask import SimulatorTask
+from common.simulator_task import SimulatorTask
 
 
 # example task tree structure:

@@ -1,4 +1,4 @@
-from common.SimulatorTask import SimulatorTask
+from common.simulator_task import SimulatorTask
 
 
 class TypicalO3Config(SimulatorTask):
