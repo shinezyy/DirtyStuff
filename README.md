@@ -65,11 +65,16 @@ source ~/.blablarc
 
 ### build
 ``` shell
+cd /where/gem5/is/cloned
 scons.py build/RISCV/gem5.opt -j 40
 ```
 Wait a few minutes.
 
 ### set executable, data, and script paths
+
+``` shell
+cd /this/repo
+```
 
 In `gem5tasks/restore_gcpt.py`, modify there variables:
 
