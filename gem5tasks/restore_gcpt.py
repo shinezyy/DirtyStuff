@@ -9,6 +9,7 @@ from common.simulator_task import SimulatorTask, task_wrapper
 from common.task_tree import task_tree_to_batch_task
 from gem5tasks.typical_o3_config import TypicalO3Config
 
+# `GEM5` 自动化测试
 
 TaskSummary = {}
 
