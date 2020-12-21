@@ -21,6 +21,38 @@ from emutasks.config import EmuTasksConfig
 # 运行这个脚本前请先设置操作系统允许打开的最大文件数：  
 #  ulimit -n 最大文件数，可以设成 4096, 即  `ulimit -n 4096`
 
+# 另外需要在香山项目下的 `src/test/csrc/` 进行相应的修改，让它返回 `trapcode`，像这样：  
+
+# emu.h:  
+# class Emulator {
+#   ......
+# #endif
+#   EmuArgs args;
+
+#   enum {
+#     STATE_GOODTRAP = 0,
+#     STATE_BADTRAP = 1,
+#     STATE_ABORT = 2,
+#     STATE_LIMIT_EXCEEDED = 3,
+#     STATE_RUNNING = -1
+#   };
+
+#   ......
+
+# public:
+#   ......
+#   bool is_good_trap() { return trapCode == STATE_GOODTRAP; };
+#   int trap_code() { return trapCode; }
+# };
+
+# main.cpp:  
+# int main(int argc, const char** argv) {
+#   ......
+#   int trapcode = emu->trap_code();
+#   ......
+#   return trapcode;
+# }
+
 TaskSummary = {}
 
 # 使用者需要修改以下写死的参数  
