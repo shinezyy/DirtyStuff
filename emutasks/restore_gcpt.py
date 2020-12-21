@@ -23,10 +23,13 @@ from emutasks.config import EmuTasksConfig
 
 TaskSummary = {}
 
+# 使用者需要修改以下写死的参数  
+
 exe = 'numactl'
 emu = '/home/ccc/XiangShan/build/emu' # 仿真可执行文件的目录
 data_dir = '/bigdata/ccc_data/gcpt_shared/random_cpts' # 测试用例目录
-top_output_dir = '/home/ccc/DirtyStuff/output/EMU/' 
+top_output_dir = '/home/ccc/DirtyStuff/output/EMU/' # 结果输出目录
+
 cpt_dir_pattern = re.compile(r'\d+')
 THREADS_NUM = 8
 MAX_CORE = 128
