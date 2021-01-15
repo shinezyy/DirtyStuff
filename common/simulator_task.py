@@ -7,7 +7,9 @@ from pprint import pprint
 class SimulatorTask:
     def __init__(
             self, exe: str, top_data_dir: str,
-            task_name: str, workload: str, sub_phase: int):
+            task_name: str, workload: str, sub_phase: int,
+            avoid_repeat: bool = False,
+            ):
         # options passing to simulator
         self.direct_options = []
         # options passing to python parser
@@ -29,6 +31,7 @@ class SimulatorTask:
         assert osp.isfile(exe)
 
         self.dry_run = False
+        self.avoid_repeat = avoid_repeat
 
     def set_workload(self, workload: str):
         self.workload = workload
@@ -45,11 +48,15 @@ class SimulatorTask:
         for x in options:
             self.list_options.add(x)
 
-    def format_options(self):
+    def format_options(self, space=False):
         self.final_options = self.direct_options
         self.final_options += list(self.list_options)
         for k, v in self.dict_options.items():
-            self.final_options.append(f'{k}={v}')
+            if space:
+                self.final_options.append(str(k))
+                self.final_options.append(str(v))
+            else:
+                self.final_options.append(f'{k}={v}')
 
     def workload_level_path_format(self):
         self.log_dir = f'{self.top_data_dir}/{self.task_name}/{self.workload}/'
@@ -72,15 +79,22 @@ class SimulatorTask:
         self.check_and_makedir(self.log_dir)
         self.check_and_makedir(self.work_dir)
 
+        # pprint(self.exe)
+        pprint(self.final_options)
+        print('log_dir: ', self.log_dir)
         if self.dry_run:
-            pprint(self.exe)
-            pprint(self.final_options)
-            print('log_dir: ', self.log_dir)
             return
 
         os.chdir(self.work_dir)
 
         cmd = sh.Command(self.exe)
+
+        if self.avoid_repeat and osp.isfile(osp.join(self.log_dir, 'completed')):
+            print(f'{self.workload}_{self.sub_phase_id} has completed')
+            return
+        if self.avoid_repeat and osp.isfile(osp.join(self.log_dir, 'running')):
+            print(f'{self.workload}_{self.sub_phase_id} is running')
+            return
 
         sh.rm(['-f', osp.join(self.log_dir, 'aborted')])
         sh.rm(['-f', osp.join(self.log_dir, 'completed')])
@@ -94,11 +108,12 @@ class SimulatorTask:
             )
         except Exception as e:
             print(e)
-            sh.rm(osp.join(self.log_dir, 'running'))
+            if osp.isfile(osp.join(self.log_dir, 'running')):
+                sh.rm(osp.join(self.log_dir, 'running'))
             sh.touch(osp.join(self.log_dir, 'aborted'))
             return
-
-        sh.rm(osp.join(self.log_dir, 'running'))
+        if osp.isfile(osp.join(self.log_dir, 'running')):
+            sh.rm(osp.join(self.log_dir, 'running'))
         sh.touch(osp.join(self.log_dir, 'completed'))
         return
 
