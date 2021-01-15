@@ -4,9 +4,10 @@ An individual repo to contain all the tools that I created for arch research.
 We will support or have supported these features:
 
 - [X] Multiple [GEM5](https://github.com/RISCVERS/GEM5-GCPT) instances on single machine restoring from the Generic checkpoint for RISC-V
-- [ ] Multiple [NEMU](https://github.com/RISCVERS/NEMU)(private repo) instances on single machine restoring from the Generic checkpoint for RISC-V
-- [ ] Multiple [Verilator simulation of Xiangshan](https://github.com/RISCVERS/XiangShan) instances on single machine restoring from the Generic checkpoint for RISC-V
-- [ ] Bug ''generation'', bug info gathering and VCD gathering for Xiangshan
+- [X] Multiple [NEMU](https://github.com/RISCVERS/NEMU)(private repo) instances on single machine restoring from the Generic checkpoint for RISC-V
+- [X] Generate checkpoint by resuming from the nearest checkpoint with [NEMU](https://github.com/RISCVERS/NEMU)
+- [X] Multiple [Verilator simulation of Xiangshan](https://github.com/RISCVERS/XiangShan) instances on single machine restoring from the Generic checkpoint for RISC-V
+- [X] Bug ''generation'', bug info gathering and VCD gathering for Xiangshan
 - [ ] Stats gathering for GEM5
 
 
