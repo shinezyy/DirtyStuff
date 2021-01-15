@@ -1,5 +1,5 @@
-# DirtyStuff
-An individual repo to contain all the tools that I created for arch research.
+# BatchTaskTemplate
+Python scripts to manage parallelism and input resources for simulation tasks.
 
 We will support or have supported these features:
 
