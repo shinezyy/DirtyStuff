@@ -90,6 +90,29 @@ class TypicalFFConfig(TypicalCoreConfig):
         self.add_list_options(self.omega_list)
 
 
+class FFH1Config(TypicalFFConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_list = [
+                '--ready-hint',
+                ]
+        self.add_list_options(self.omega_list)
+
+
+class FFG2Config(TypicalFFConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_dict = {
+                '--dq-groups': 2,
+                '--num-LQ': self.window_size * 2,
+                '--num-SQ': self.window_size * 2,
+                '--num-ROB': self.window_size * 2,
+                '--num-IQ': self.window_size * 2,
+                '--num-PhysReg': self.window_size * 2,
+                }
+        self.add_dict_options(self.omega_dict)
+
+
 class OmegaBaseConfig(TypicalCoreConfig):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
@@ -107,6 +130,15 @@ class OmegaBaseConfig(TypicalCoreConfig):
         self.add_dict_options(self.omega_dict)
 
 
+class OmegaH1S0G1Config(OmegaBaseConfig):  # O1 no shuffle
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_list = [
+                '--ready-hint',
+                ]
+        self.add_list_options(self.omega_list)
+
+
 class OmegaH1S1G1Config(OmegaBaseConfig):  # O1
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
@@ -115,6 +147,17 @@ class OmegaH1S1G1Config(OmegaBaseConfig):  # O1
                 '--ready-hint',
                 ]
         self.add_list_options(self.omega_list)
+
+
+class XOmegaH1S1G1Config(OmegaH1S1G1Config):  # O1 + xbar
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_dict = {
+                '--xbar-wk': 1,
+                '--min-wk': 0,
+                }
+        self.add_dict_options(self.omega_dict)
+
 
 class OmegaH1S1G2Config(OmegaBaseConfig):  # O2
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
