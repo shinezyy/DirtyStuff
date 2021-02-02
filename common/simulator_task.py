@@ -26,12 +26,15 @@ class SimulatorTask:
 
         self.workload = workload
         self.sub_phase_id = sub_phase
+        self.code_name = f'{workload}_{sub_phase}'
 
         self.exe = exe
         assert osp.isfile(exe)
 
         self.dry_run = False
         self.avoid_repeat = avoid_repeat
+        self.cpt_file = None
+        self.valid = True
 
     def set_workload(self, workload: str):
         self.workload = workload
@@ -119,5 +122,8 @@ class SimulatorTask:
 
 
 def task_wrapper(task: SimulatorTask):
-    task.run()
-    return task.workload, task.sub_phase_id
+    if task.valid:
+        task.run()
+        return task.workload, task.sub_phase_id
+    else:
+        return None

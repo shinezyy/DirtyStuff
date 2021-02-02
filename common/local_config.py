@@ -9,3 +9,5 @@ spec_cpu_2017_dir = os.environ['cpu_2017_dir']
 gathered_spec2017_data_dir = os.environ['spec2017_run_dir']
 
 gathered_spec2006_data_dir = os.environ['spec2006_run_dir']
+
+simpoints_file = '/home51/zyy/expri_results/simpoints.json'
