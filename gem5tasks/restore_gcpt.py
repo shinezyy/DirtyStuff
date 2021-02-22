@@ -26,10 +26,15 @@ args = parser.parse_args()
 # CurConf = tc.OmegaH1S1G1Config
 # CurConf = tc.OmegaH1S1G2Config
 # CurConf = tc.OmegaH1S1G2CL0Config
-CurConf = tc.OmegaH1S1G1B8Config
-# CurConf = TypicalFFConfig
+# CurConf = tc.OmegaH1S1G1B8Config
 # CurConf = FullWindowO3Config
-num_threads = 100
+
+# CurConf = tc.FF128G2Config
+# CurConf = tc.FFH1Config
+# CurConf = tc.FFG2Config
+CurConf = tc.FFG2CL0CG1Config
+# CurConf = tc.TypicalFFConfig
+num_threads = 55
 
 ver = '17'
 gem5_base = '/home51/zyy/projects/omegaflow'
@@ -43,7 +48,7 @@ cpt_dir_pattern = re.compile(r'\d+')
 workload_filter = []
 
 task_whitlelist = []
-with open (lc.simpoints_file) as jf:
+with open (lc.simpoints_file[ver]) as jf:
     simpoints = json.load(jf)
 for workload in simpoints:
     for key in simpoints[workload]:

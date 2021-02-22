@@ -90,6 +90,16 @@ class TypicalFFConfig(TypicalCoreConfig):
         self.add_list_options(self.omega_list)
 
 
+class FF128Config(TypicalFFConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        self.window_size = 128
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_dict = {
+                '--dq-depth': 32,
+                }
+        self.add_dict_options(self.omega_dict)
+
+
 class FFH1Config(TypicalFFConfig):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
@@ -109,6 +119,28 @@ class FFG2Config(TypicalFFConfig):
                 '--num-ROB': self.window_size * 2,
                 '--num-IQ': self.window_size * 2,
                 '--num-PhysReg': self.window_size * 2,
+                }
+        self.add_dict_options(self.omega_dict)
+
+class FFG2CL0CG1Config(FFG2Config):  # O2+
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_dict = {
+                '--cross-group-latency': 1,
+                }
+        self.add_dict_options(self.omega_dict)
+        self.omega_list = [
+                '--no-mg-center-latency',
+                ]
+        self.add_list_options(self.omega_list)
+
+
+class FF128G2Config(FFG2Config):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        self.window_size = 128
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.omega_dict = {
+                '--dq-depth': 32,
                 }
         self.add_dict_options(self.omega_dict)
 
