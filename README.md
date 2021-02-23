@@ -34,26 +34,8 @@ For debian family:
 sudo apt install gcc g++ python3 zlib1g-dev m4 libprotobuf-dev git swig python-dev protobuf-compiler libgoogle-perftools-dev libevent-dev make libncurses5-dev build-essential autoconf
 ```
 
-For an old centos (newer RPM family might provide most of them):
-``` shell
-No package g++ available. --> gcc-g++
-No package zlib1g-dev available.  --> zlib
-
-No package libprotobuf-dev available.  --> manully install:
-wget http://cbs.centos.org/kojifiles/packages/protobuf/2.5.0/10.el7.centos/x86_64/protobuf-2.5.0-10.el7.centos.x86_64.rpm
-wget http://cbs.centos.org/kojifiles/packages/protobuf/2.5.0/10.el7.centos/x86_64/protobuf-devel-2.5.0-10.el7.centos.x86_64.rpm
-wget http://cbs.centos.org/kojifiles/packages/protobuf/2.5.0/10.el7.centos/x86_64/protobuf-compiler-2.5.0-10.el7.centos.x86_64.rpm
-sudo yum -y install protobuf-2.5.0-10.el7.centos.x86_64.rpm \
-protobuf-compiler-2.5.0-10.el7.centos.x86_64.rpm \
-protobuf-devel-2.5.0-10.el7.centos.x86_64.rpm
-
-No package python-dev available.  --> python-devel
-No package libgoogle-perftools-dev available.  --> google-perftools google-perftools-devel
-No package libevent-dev available. --> ?
-No package libncurses5-dev available. --> ?
-```
-
-Prepare scons 3 manually, the default scons installed are often scons 2 or are frozen to be scons 2 for oldder version of GEM5. So for newer versions of GEM5, we manually download scons 3 from [sourceforge](https://sourceforge.net/projects/scons/files/scons/3.1.2/).
+If scons is 2.x on your machine,
+you can manually download scons 3 from [sourceforge](https://sourceforge.net/projects/scons/files/scons/3.1.2/).
 Then expose the script to PATH in bashrc/zshrc/xxrc:
 ``` shell
 export PATH=/the/path/to/scons-3.1.2/src/script:$PATH
@@ -72,24 +54,4 @@ scons.py build/RISCV/gem5.opt -j 40
 Wait a few minutes.
 
 ### set executable, data, and script paths
-
-``` shell
-cd /this/repo
-```
-
-In `gem5tasks/restore_gcpt.py`, modify there variables:
-
-``` Python
-exe = The gem5.opt file
-data_dir = where generic checkpoint files reside
-top_output_dir = where you want to store output stats and logs
-```
-
-``` Python
-task.direct_options += ['/path/toconfigs/example/fs.py']
-```
-
-### run
-``` shell
-python3 ./gem5tasks/restore_gcpt.py
-```
+[Up-to-date instructions for running GEM5 with GCPT](gem5-gcpt.md)
