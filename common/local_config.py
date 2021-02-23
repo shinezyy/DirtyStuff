@@ -10,4 +10,7 @@ gathered_spec2017_data_dir = os.environ['spec2017_run_dir']
 
 gathered_spec2006_data_dir = os.environ['spec2006_run_dir']
 
-simpoints_file = '/home51/zyy/expri_results/simpoints.json'
+simpoints_file = {
+        '17': '/home51/zyy/expri_results/simpoints17.json',
+        '06': '/home51/zyy/expri_results/simpoints06.json',
+        }
