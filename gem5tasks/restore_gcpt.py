@@ -20,6 +20,7 @@ import gem5tasks.typical_o3_config as tc
 parser = argparse.ArgumentParser()
 parser.add_argument('-T', '--task', action='store')
 parser.add_argument('-t', '--debug-tick', action='store', type=int)
+parser.add_argument('-C', '--config', action='store', type=str)
 args = parser.parse_args()
 
 # CurConf = TypicalO3Config
@@ -32,8 +33,11 @@ args = parser.parse_args()
 # CurConf = tc.FF128G2Config
 # CurConf = tc.FFH1Config
 # CurConf = tc.FFG2Config
-CurConf = tc.FFG2CL0CG1Config
-# CurConf = tc.TypicalFFConfig
+# CurConf = tc.FFG2CL0CG1Config
+if args.config is not None:
+    CurConf = eval(f'tc.{args.config}')
+else:
+    CurConf = tc.FullWindowO3Config
 num_threads = 55
 
 ver = '17'
