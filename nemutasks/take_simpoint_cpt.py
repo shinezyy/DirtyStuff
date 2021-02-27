@@ -130,7 +130,7 @@ if debug:
 else:
     p = Pool(80)
 
-    results = p.imap(task_wrapper, batch_tasks, chunksize=1)
+    results = p.map(task_wrapper, batch_tasks, chunksize=1)
 
     count = 0
     for res in results:

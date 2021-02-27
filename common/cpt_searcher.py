@@ -1,12 +1,15 @@
 import os
 import os.path as osp
+import re
 
-def find_nemu_cpts(d: str):
+def find_nemu_cpts(d: str, workload_filter=None):
     cpt_dir_pattern = re.compile(r'\d+')
     TaskSummary = {}
     for workload in os.listdir(d):
         workload_dir = osp.join(d, workload)
         if not osp.isdir(workload_dir):
+            continue
+        if workload not in workload_filter:
             continue
         TaskSummary[workload] = {}
         for cpt in os.listdir(workload_dir):
