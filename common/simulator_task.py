@@ -91,7 +91,7 @@ class SimulatorTask:
         self.check_and_makedir(self.work_dir)
 
         # pprint(self.exe)
-        pprint(self)
+        print(self)
         # print('log_dir: ', self.log_dir)
         if self.dry_run:
             return
