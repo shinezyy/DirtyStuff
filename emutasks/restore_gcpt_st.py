@@ -9,19 +9,19 @@ from emutasks import EmuTasksConfig
 # `GEM5` 自动化测试
 
 debug = False
-num_threads = 1
+num_threads = 30
 
 ver = '06'
 # exe = f'/bigdata/ljw/xs-emus/emu'
-exe = f'/home50/xyn/xs/XiangShan/build/emu'
-data_dir = f'/home51/zyy/expri_results/nemu_take_simpoint_cpt_{ver}/' # cpt dir
-top_output_dir = '/home51/zyy/expri_results/' # cpt dir
+exe = f'/home/zyy/task_bins/emu'
+data_dir = f'{lc.cpt_top}/nemu_take_simpoint_cpt_{ver}/' # cpt dir
+top_output_dir = '/home/zyy/expri_results/' # output dir
 
 workload_filter = []
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         is_simpoint=True,
-        simpoints_file=lc.simpoints_file[ver])
+        simpoints_file=lc.simpoints_file_short[ver])
 
 parser = cpt_desc.parser
 
