@@ -100,7 +100,8 @@ class CptBatchDescription:
                     continue
 
             if hashed:
-                if hash(task) % n_machines == lc.get_machine_hash():
+                hash_buckets, n_buckets = lc.get_machine_hash()
+                if hash(task) % n_buckets in hash_buckets:
                     task.valid = True
                 else:
                     continue

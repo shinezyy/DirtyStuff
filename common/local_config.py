@@ -1,5 +1,6 @@
 import os
 import platform
+import json
 
 
 # /path/to/spec2006/benchspec/CPU2006
@@ -23,13 +24,34 @@ simpoints_file_short = {
 
 cpt_top = '/home50/zyy/expri_results'
 
-hash_ids = {
-        'xiangshan-50': 0,
-        'xiangshan-52': 1,
-        'xiangshan-53': 2,
-        'xiangshan-00': 3,
-        'xiangshan-51': 4,
-        }
+# hash_ids = {
+#         'xiangshan-50': 0,
+#         'xiangshan-52': 1,
+#         'xiangshan-53': 2,
+#         'xiangshan-00': 3,
+#         'xiangshan-51': 4,
+#         }
 
+machine_config = '/home/zyy/.config/machine_state/dispatch.json'
 def get_machine_hash():
-    return hash_ids[platform.node()]
+    hash_ids = {}
+    with open(machine_config) as f:
+        js = json.load(f)
+    cursor = 0
+    for host in js:
+        hash_ids[host] = []
+        for i in range(0, js[host]['load']):
+            hash_ids[host].append(cursor)
+            cursor += 1
+        print(host, hash_ids[host])
+    hostname = platform.node()
+    return hash_ids[hostname], cursor
+
+def get_machine_threads():
+    with open(machine_config) as f:
+        js = json.load(f)
+    hostname = platform.node()
+    return int(js[hostname]["threads"])
+
+if __name__ == '__main__':
+    print(get_machine_hash())

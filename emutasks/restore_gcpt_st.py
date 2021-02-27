@@ -21,7 +21,7 @@ workload_filter = []
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         is_simpoint=True,
-        simpoints_file=lc.simpoints_file_short[ver])
+        simpoints_file=lc.simpoints_file[ver])
 
 parser = cpt_desc.parser
 
@@ -60,5 +60,5 @@ for task in cpt_desc.tasks:
 print(f'Output dir {top_output_dir}/{task_name}')
 print(len(cpt_desc.tasks))
 
-cpt_desc.run(num_threads, debug)
+cpt_desc.run(lc.get_machine_threads(), debug)
 
