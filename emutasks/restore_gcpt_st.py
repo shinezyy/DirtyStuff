@@ -21,7 +21,7 @@ workload_filter = []
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         is_simpoint=True,
-        simpoints_file=lc.simpoints_file_short[ver])
+        simpoints_file=lc.simpoints_file[ver])
 
 parser = cpt_desc.parser
 
@@ -34,7 +34,7 @@ CurConf = EmuTasksConfig
 task_name = f'xs_simpoint_batch/SPEC{ver}_{CurConf.__name__}'
 cpt_desc.set_task_filter()
 cpt_desc.set_conf(CurConf, task_name)
-cpt_desc.filter_tasks()
+cpt_desc.filter_tasks(hashed=True, n_machines=4)
 
 debug_tick = None
 
@@ -57,6 +57,7 @@ for task in cpt_desc.tasks:
         # '--gcpt-warmup': str(50*10**6),
     })
     task.format_options(space=True)
+print(len(cpt_desc.tasks))
 
 cpt_desc.run(num_threads, debug)
 

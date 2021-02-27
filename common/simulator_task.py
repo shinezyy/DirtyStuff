@@ -2,6 +2,7 @@ import sh
 import os
 import os.path as osp
 from pprint import pprint
+import hashlib
 
 
 class SimulatorTask:
@@ -35,6 +36,13 @@ class SimulatorTask:
         self.avoid_repeat = avoid_repeat
         self.cpt_file = None
         self.valid = True
+
+    def __hash__(self):
+        info = f"{self.code_name}"
+        return int(hashlib.sha256(info.encode()).hexdigest(), base=16)
+
+    def __str__(self):
+        return str([self.code_name, self.exe] + self.final_options)
 
     def set_workload(self, workload: str):
         self.workload = workload
@@ -83,8 +91,8 @@ class SimulatorTask:
         self.check_and_makedir(self.work_dir)
 
         # pprint(self.exe)
-        pprint(self.final_options)
-        print('log_dir: ', self.log_dir)
+        pprint(self)
+        # print('log_dir: ', self.log_dir)
         if self.dry_run:
             return
 

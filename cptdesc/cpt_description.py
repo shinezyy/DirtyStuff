@@ -70,7 +70,7 @@ class CptBatchDescription:
             self.workload_filter = self.args.workload
             print(self.workload_filter)
 
-    def filter_tasks(self):
+    def filter_tasks(self, hashed=False, n_machines=0):
         for task in self._tasks:
             task.cpt_file = self.task_tree[task.workload][task.sub_phase_id]
 
@@ -99,10 +99,17 @@ class CptBatchDescription:
                 if not task.valid:
                     continue
 
+            if hashed:
+                if hash(task) % n_machines == lc.get_machine_hash():
+                    task.valid = True
+                else:
+                    continue
+
             self.tasks.append(task)
         random.shuffle(self.tasks)
 
     def run(self, num_threads, debug=False):
+        print(f'Run {len(self.tasks)} tasks with {num_threads} threads')
         if debug:
             task_wrapper(tasks[0])
         else:
