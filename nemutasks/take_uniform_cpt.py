@@ -4,12 +4,12 @@ import sys
 import re
 import os.path as osp
 import argparse
+import numpy as np
 from pprint import pprint
 from multiprocessing import Pool
 
 from common.simulator_task import SimulatorTask, task_wrapper
 from common.task_tree import task_tree_to_batch_task
-from common.simpoint_parser import parse_simpoint_analysis_file
 from gem5tasks.typical_o3_config import TypicalO3Config
 
 # NEMU batch
@@ -23,18 +23,11 @@ ver = args.spec_version
 TaskSummary = {}
 
 exe = '/home51/zyy/projects/NEMU/build/riscv64-nemu-interpreter'
-simpoint_dir = f'/home51/zyy/expri_results/simpoint_profile_{ver}'
-avail_cpt_dir = f'/bigdata/zyy/checkpoints_profiles/betapoint_profile_{ver}'
+avail_cpt_dir = f'/home51/zyy/expri_results/nemu_take_sparse_uniform_cpt_{ver}'
 top_output_dir = '/home51/zyy/expri_results/' # cpt dir
-batch_task_name = f'nemu_take_simpoint_cpt_{ver}'
+batch_task_name = f'nemu_take_uniform_cpt_{ver}'
 cpt_dir_pattern = re.compile(r'\d+')
 
-
-def find_simpoint_analysis_files(d: str):
-    for workload in os.listdir(d):
-        point = osp.join(d, workload, 'simpoints0')
-        weight = osp.join(d, workload, 'weights0')
-        yield (workload, point, weight)
 
 def get_avail_cpts(d):
     cpt_pattern = re.compile(r"_(\d+)_\.gz")
@@ -60,18 +53,15 @@ avail_cpts = get_avail_cpts(avail_cpt_dir)
 # print(avail_cpts)
 
 batch_tasks = []
-for workload, point_file, weight_file in \
-        find_simpoint_analysis_files(simpoint_dir):
+inst_chunksize = 8000000000
+# for workload in ['bzip2_liberty']:
+for workload in os.listdir(avail_cpt_dir):
     workload_cpts = avail_cpts[workload]
-    print(workload)
     with_cpt = 0
     without_cpt = 0
-    for interval, weight, start, actual_warmup in parse_simpoint_analysis_file(
-            point_file, weight_file,
-            interval_length=50*10**6,
-            warmup_length=50*10**6,
-            ):
-        phased_workload = f'{workload}_{start}_{weight}'
+    largest_cpt_point = sorted(workload_cpts.keys())[-1]
+    for start in np.arange(inst_chunksize//10, largest_cpt_point, inst_chunksize):
+        phased_workload = f'{workload}_{start // inst_chunksize * inst_chunksize}'
         if start == 0:
             start = 1000
         task = SimulatorTask(exe, top_output_dir,
@@ -99,12 +89,11 @@ for workload, point_file, weight_file in \
         last = 0
         for k in reversed(sorted(workload_cpts.keys())):
             if k <= start:
-                # print(f'To gen cpt@{start}, we start @{k} with {workload_cpts[k]}')
+                print(f'To gen cpt@{start}, we start @{k} with {workload_cpts[k]}')
                 last = k
                 break
         if last == 0:
             without_cpt += 1
-
         else:
             with_cpt += 1
             task.add_dict_options({
@@ -112,8 +101,8 @@ for workload, point_file, weight_file in \
                 })
 
         task.add_dict_options({  # How many instructions have to execute before take cpt
-            '--checkpoint-interval': start - last + 1000,
-            '--max-insts': start - last + 1500,
+            '--checkpoint-interval': inst_chunksize//10,
+            '--max-insts':  int(inst_chunksize * 1.0002),
             })
 
         task.format_options(space=True)
@@ -121,6 +110,7 @@ for workload, point_file, weight_file in \
         batch_tasks.append(task)
     print(f'{with_cpt} tasks with cpt, {without_cpt} tasks without cpt, {with_cpt + without_cpt} in total')
 
+# sys.exit(0)
 debug = False
 if debug:
     task_wrapper(batch_tasks[0])
@@ -128,7 +118,7 @@ if debug:
     # for res in results:
     #     print(res)
 else:
-    p = Pool(80)
+    p = Pool(60)
 
     results = p.map(task_wrapper, batch_tasks, chunksize=1)
 
