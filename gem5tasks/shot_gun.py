@@ -46,11 +46,12 @@ for task in cpt_desc.tasks:
         '--mem-size': '8GB',
         '--generic-rv-cpt': task.cpt_file,
         '--gcpt-restorer': '/home/zyy/projects/NEMU/resource/gcpt_restore/build/gcpt.bin',
-        '--maxinsts': str(50*10**6 + 160*50*10**6),
+        '--maxinsts': str(50*10**6 + 16*50*10**6),
         '--gcpt-warmup': str(50*10**6),
         '--gcpt-repeat-interval': str(50*10**6),
     })
     task.format_options()
+    task.dry_run=False
 
 cpt_desc.run(num_threads, debug)
 

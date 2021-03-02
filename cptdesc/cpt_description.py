@@ -5,14 +5,17 @@ from multiprocessing import Pool
 
 from common import local_config as lc
 from common import task_blacklist
-from common import find_nemu_simpoint_cpts, find_nemu_cpts
+from common import *
 from common.task_tree import task_tree_to_batch_task
 from common.simulator_task import task_wrapper
 
 class CptBatchDescription:
     def __init__(self, data_dir, exe, top_output_dir, ver,
             is_simpoint=False,
-            simpoints_file=None):
+            simpoints_file=None,
+            is_uniform=True,
+            is_sparse_uniform=False,
+            ):
 
         self.task_whitelist = []
 
@@ -20,9 +23,13 @@ class CptBatchDescription:
         self.exe = exe
         self.top_output_dir = top_output_dir
         self.ver = ver
-        self.simpoints_file = simpoints_file
+
+        self.is_uniform = is_uniform
+        self.is_sparse_uniform = is_sparse_uniform
 
         self.is_simpoint = is_simpoint
+        self.simpoints_file = simpoints_file
+
         if is_simpoint:
             with open (simpoints_file) as jf:
                 simpoints = json.load(jf)
@@ -51,9 +58,14 @@ class CptBatchDescription:
     def set_conf(self, Conf, task_name):
         self.task_name = task_name
         if self.is_simpoint:
+            assert not self.is_uniform
             self.task_tree = find_nemu_simpoint_cpts(self.data_dir)
         else:
-            self.task_tree = find_nemu_cpts(self.data_dir, self.workload_filter)
+            assert self.is_uniform
+            if self.is_sparse_uniform:
+                self.task_tree = find_nemu_sparse_uniform_cpts(self.data_dir, self.workload_filter)
+            else:
+                self.task_tree = find_nemu_uniform_cpts(self.data_dir, self.workload_filter)
 
         self._tasks = task_tree_to_batch_task(Conf,
                 self.task_tree,
@@ -117,11 +129,14 @@ class CptBatchDescription:
             p = Pool(num_threads)
 
             results = p.map(task_wrapper, self.tasks, chunksize=1)
+            phases = []
             count = 0
             for res in results:
                 if res is not None:
                     print(res)
+                    # phases.append(res[1])
                     count += 1
+            # print(sorted(phases))
             print(f'Finished {count} simulations')
             p.close()
 
