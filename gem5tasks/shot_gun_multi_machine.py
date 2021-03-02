@@ -11,9 +11,9 @@ debug = False
 
 ver = '06'
 gem5_base = '/home51/zyy/projects/omegaflow'
-exe = f'/home/zyy/task_bins/gem5.opt'
+exe = f'/home/zyy/projects/omegaflow/build/RISCV/gem5.opt'
 fs_script = f'/home/zyy/task_bins/gem5_configs/example/fs.py'
-data_dir = f'/home51/zyy/expri_results/nemu_take_uniform_cpt_{ver}/' # cpt dir
+data_dir = f'{lc.cpt_top}/nemu_take_uniform_cpt_{ver}/' # cpt dir
 top_output_dir = '/home/zyy/expri_results/shotgun/' # output
 
 workload_filter = []

@@ -3,6 +3,8 @@ import platform
 import json
 
 
+cpt_top = '/home53/zyy/expri_results'
+
 # /path/to/spec2006/benchspec/CPU2006
 spec_cpu_2006_dir = os.environ['cpu_2006_dir']
 # /path/to/spec2017/benchspec/CPU
@@ -21,6 +23,4 @@ simpoints_file_short = {
         '17': '/ehrtheorgoag/',
         '06': 'resources/simpoint_cpt_desc/simpoints06_cover0.5.json', # 231 points
         }
-
-cpt_top = '/home51/zyy/expri_results'
 
