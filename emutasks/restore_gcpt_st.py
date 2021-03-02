@@ -2,11 +2,12 @@ import os
 import sys
 import os.path as osp
 
+import load_balance as lb
 from common import local_config as lc
 from cptdesc import CptBatchDescription
 from emutasks import EmuTasksConfig
 
-# `GEM5` 自动化测试
+# `emu` 自动化测试
 
 debug = False
 num_threads = 30
@@ -21,6 +22,7 @@ workload_filter = []
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         is_simpoint=True,
+        is_uniform=False,
         simpoints_file=lc.simpoints_file[ver])
 
 parser = cpt_desc.parser
@@ -60,5 +62,5 @@ for task in cpt_desc.tasks:
 print(f'Output dir {top_output_dir}/{task_name}')
 print(len(cpt_desc.tasks))
 
-cpt_desc.run(lc.get_machine_threads(), debug)
+cpt_desc.run(lb.get_machine_threads(), debug)
 

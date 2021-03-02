@@ -21,6 +21,7 @@ class SimulatorTask:
         self.work_dir = None
         self.log_dir = None
 
+        print(top_data_dir)
         assert osp.isdir(top_data_dir)
         self.top_data_dir = top_data_dir
         self.task_name = task_name

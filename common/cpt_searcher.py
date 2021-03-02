@@ -33,7 +33,7 @@ def find_nemu_uniform_cpts(d: str, workload_filter=None,
         workload_phase_dir = osp.join(d, workload_phase)
         phase = int(workload_phase.split('_')[-1])
         if phase > max_phase_per_workload * point_size:
-            print(f'Skip {workload_phase}')
+            # print(f'Skip {workload_phase}')
             continue
 
         workload = '_'.join(workload_phase.split('_')[:-1])

@@ -3,7 +3,7 @@ import json
 import random
 from multiprocessing import Pool
 
-from common import local_config as lc
+import load_balance as lb
 from common import task_blacklist
 from common import *
 from common.task_tree import task_tree_to_batch_task
@@ -82,7 +82,7 @@ class CptBatchDescription:
             self.workload_filter = self.args.workload
             print(self.workload_filter)
 
-    def filter_tasks(self, hashed=False, n_machines=0):
+    def filter_tasks(self, hashed=False, n_machines=0, task_type='xiangshan'):
         for task in self._tasks:
             task.cpt_file = self.task_tree[task.workload][task.sub_phase_id]
 
@@ -112,7 +112,7 @@ class CptBatchDescription:
                     continue
 
             if hashed:
-                hash_buckets, n_buckets = lc.get_machine_hash()
+                hash_buckets, n_buckets = lb.get_machine_hash(task_type)
                 if hash(task) % n_buckets in hash_buckets:
                     task.valid = True
                 else:
@@ -123,6 +123,8 @@ class CptBatchDescription:
 
     def run(self, num_threads, debug=False):
         print(f'Run {len(self.tasks)} tasks with {num_threads} threads')
+        if num_threads <= 0:
+            return
         if debug:
             task_wrapper(tasks[0])
         else:

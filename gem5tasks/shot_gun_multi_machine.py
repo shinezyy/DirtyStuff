@@ -2,6 +2,7 @@ import os
 import sys
 import os.path as osp
 
+import load_balance as lb
 from common import local_config as lc
 from cptdesc import CptBatchDescription
 import gem5tasks.typical_o3_config as tc
@@ -10,10 +11,10 @@ debug = False
 
 ver = '06'
 gem5_base = '/home51/zyy/projects/omegaflow'
-exe = f'{gem5_base}/build/RISCV/gem5.opt'
-fs_script = f'{gem5_base}/configs/example/fs.py'
+exe = f'/home/zyy/task_bins/gem5.opt'
+fs_script = f'/home/zyy/task_bins/gem5_configs/example/fs.py'
 data_dir = f'/home51/zyy/expri_results/nemu_take_uniform_cpt_{ver}/' # cpt dir
-top_output_dir = '/home51/zyy/expri_results/shotgun/' # output
+top_output_dir = '/home/zyy/expri_results/shotgun/' # output
 
 workload_filter = []
 
@@ -23,12 +24,8 @@ cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
 parser = cpt_desc.parser
 
 parser.add_argument('-C', '--config', action='store', type=str)
-parser.add_argument('-j', '--threads', action='store', type=int, required=True)
 
 args = cpt_desc.parse_args()
-
-num_threads = args.threads
-assert 0 < num_threads < 128
 
 if args.config is not None:
     CurConf = eval(f'tc.{args.config}')
@@ -37,7 +34,7 @@ else:
 task_name = f'gem5_shotgun_cont_{ver}/{CurConf.__name__}'
 cpt_desc.set_task_filter()
 cpt_desc.set_conf(CurConf, task_name)
-cpt_desc.filter_tasks()
+cpt_desc.filter_tasks(hashed=True, task_type='gem5')
 
 for task in cpt_desc.tasks:
     task.sub_workload_level_path_format()
@@ -54,7 +51,7 @@ for task in cpt_desc.tasks:
         '--gcpt-repeat-interval': str(50*10**6),
     })
     task.format_options()
-    task.dry_run=False
+    task.dry_run=True
 
-cpt_desc.run(num_threads, debug)
+cpt_desc.run(lb.get_machine_threads('gem5'), debug)
 
