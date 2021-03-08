@@ -43,6 +43,7 @@ class CptBatchDescription:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('-T', '--task', action='store')
         self.parser.add_argument('-W', '--workload', action='store', nargs='+')
+        self.parser.add_argument('-D', '--dry-run', action='store_true')
 
         self.workload_filter = []
 
@@ -118,6 +119,8 @@ class CptBatchDescription:
                 else:
                     continue
 
+            if self.args.dry_run:
+                task.dry_run = True
             self.tasks.append(task)
         random.shuffle(self.tasks)
 

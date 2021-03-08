@@ -55,6 +55,40 @@ class FullWindowO3Config(TypicalCoreConfig):
         self.add_dict_options(self.o3_dict)
 
 
+class Typical8WO3Config(TypicalCoreConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.o3_dict = {
+                '--cpu-type': 'DerivO3CPU',
+                '--num-ROB': self.window_size,
+                '--num-PhysReg': self.window_size,
+                '--num-IQ': round(0.416 * self.window_size),
+                '--num-LQ': round(0.375 * self.window_size),
+                '--num-SQ': round(0.25 * self.window_size),
+                '--o3-core-width': 8,
+                }
+        self.add_dict_options(self.o3_dict)
+
+
+class Smarts8WO3Config(Typical8WO3Config):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.mem_dict = {
+                '--l1i_size': '32kB',
+                '--l1i_assoc': '4',
+
+                '--l1d_size': '32kB',
+                '--l1d_assoc': '4',
+
+                '--l2_size': '2MB',
+                '--l2_assoc': '8',
+                }
+        self.add_dict_options(self.mem_dict)
+        self.list_options.remove(
+                '--l3_cache',
+                )
+
+
 class TypicalO3Config(TypicalCoreConfig):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)

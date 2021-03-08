@@ -21,7 +21,7 @@ class SimulatorTask:
         self.work_dir = None
         self.log_dir = None
 
-        print(top_data_dir)
+        # print(top_data_dir)
         assert osp.isdir(top_data_dir)
         self.top_data_dir = top_data_dir
         self.task_name = task_name
@@ -88,14 +88,13 @@ class SimulatorTask:
         assert self.work_dir is not None
         assert self.log_dir is not None
 
-        self.check_and_makedir(self.log_dir)
-        self.check_and_makedir(self.work_dir)
-
         # pprint(self.exe)
         print(self)
         # print('log_dir: ', self.log_dir)
         if self.dry_run:
             return
+        self.check_and_makedir(self.log_dir)
+        self.check_and_makedir(self.work_dir)
 
         os.chdir(self.work_dir)
 
