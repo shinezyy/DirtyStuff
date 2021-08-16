@@ -2,12 +2,15 @@ import argparse
 import json
 import random
 from multiprocessing import Pool
+from multiprocessing import Value
+from ctypes import c_bool
+import time
 
 import load_balance as lb
 from common import task_blacklist
 from common import *
 from common.task_tree import task_tree_to_batch_task
-from common.simulator_task import task_wrapper
+from common.simulator_task import task_wrapper, task_wrapper_with_numactl
 
 class CptBatchDescription:
     def __init__(self, data_dir, exe, top_output_dir, ver,
@@ -33,6 +36,7 @@ class CptBatchDescription:
         if is_simpoint:
             with open (simpoints_file) as jf:
                 simpoints = json.load(jf)
+                print(simpoints)
             for workload in simpoints:
                 for key in simpoints[workload]:
                     self.task_whitelist.append(f'{workload}_{key}')
@@ -41,7 +45,7 @@ class CptBatchDescription:
         self.tasks = []
 
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-T', '--task', action='store')
+        self.parser.add_argument('-T', '--task', action='store', nargs='+')
         self.parser.add_argument('-W', '--workload', action='store', nargs='+')
         self.parser.add_argument('-D', '--dry-run', action='store_true')
 
@@ -51,6 +55,11 @@ class CptBatchDescription:
         self.task_blacklist = [f.replace('/', '_') for f in task_blacklist[ver]]
 
         self.args = None
+
+        self.use_numactl = False
+        self.numactl_prefixes = []
+        self.numactl_status_list = []
+        self.numactl_avoid_cores = []
 
     def parse_args(self):
         self.args = self.parser.parse_args()
@@ -76,23 +85,46 @@ class CptBatchDescription:
 
     def set_task_filter(self):
         if self.args.task is not None:
-            self.task_filter = [args.task]
+            self.task_filter = self.args.task
         self.task_filter = [f.replace('/', '_') for f in self.task_filter]
 
         if self.args.workload is not None:
             self.workload_filter = self.args.workload
             print(self.workload_filter)
+    
+    def set_numactl_status(self):
+        self.numactl_status_list = [Value(c_bool, lock=True) for i in range(len(self.numactl_prefixes))]
+        for st in self.numactl_status_list:
+            st.value = False
+
+    def set_numactl_prefixes(self, avoid_cores=[]):
+        num_numa_nodes = 2
+        num_physical_cores = 128
+        emu_thread = 4
+        cores_per_node = int(num_physical_cores / num_numa_nodes)
+        per_node_confs = [[[n, i] for i in range(n*cores_per_node,(n+1)*cores_per_node,emu_thread)] for n in range(num_numa_nodes)]
+        confs = []
+        for pnc in per_node_confs:
+            confs += pnc
+        self.numactl_prefixes = [{'node': node, 'cores': str(core) + '-' + str(core+emu_thread-1)} for [node, core] in confs if core not in avoid_cores]
+
+    def set_numactl(self, avoid_cores=[]):
+        self.use_numactl = True
+        self.set_numactl_prefixes(avoid_cores)
+        self.set_numactl_status()
+        # print(self.numactl_prefixes)
+        # print(self.numactl_status_list)
 
     def filter_tasks(self, hashed=False, n_machines=0, task_type='xiangshan'):
         for task in self._tasks:
             task.cpt_file = self.task_tree[task.workload][task.sub_phase_id]
-
+            # print(task.cpt_file)
             if len(self.task_blacklist):
                 if task.code_name in self.task_blacklist:
                     task.valid = False
                     continue
 
-            if len(self.task_whitelist):
+            if len(self.task_blacklist):
                 if task.code_name not in self.task_whitelist:
                     task.valid = False
                     continue
@@ -111,6 +143,9 @@ class CptBatchDescription:
                         task.valid = True
                 if not task.valid:
                     continue
+            
+            if task.code_name not in self.task_whitelist:
+                task.valid = False
 
             if hashed:
                 hash_buckets, n_buckets = lb.get_machine_hash(task_type)
@@ -123,17 +158,65 @@ class CptBatchDescription:
                 task.dry_run = True
             self.tasks.append(task)
         random.shuffle(self.tasks)
+    
+    def numactl_run(self):
+        def clear_status(self):
+            st_l = self.numactl_status_list
+            def fn(x: tuple):
+                n = x[2]
+                st = st_l[n]
+                with st.get_lock():
+                    # print(f"setting status {n} to false")
+                    st.value = False
+            return fn
+
+        p = Pool(len(self.numactl_prefixes))
+        results = [None for t in self.tasks]
+        for i in range(len(self.tasks)):
+            while True:
+                broken = False
+                for node_idx in range(len(self.numactl_prefixes)):
+                    st = self.numactl_status_list[node_idx]
+                    with st.get_lock():
+                        if st.value:
+                            continue
+                        else:
+                            broken = True
+                            st.value = True
+                            n = self.numactl_prefixes[node_idx]
+                            self.tasks[i].numa_node = n['node']
+                            self.tasks[i].cores = n['cores']
+                            self.tasks[i].use_numactl = True
+                            results[i] = p.apply_async(task_wrapper_with_numactl,
+                                                       args=(self.tasks[i], node_idx),
+                                                       callback=clear_status(self))
+                            break
+                if broken:
+                    break
+                else:
+                    time.sleep(1)
+        
+        p.close()
+        p.join()
+        for i in range(len(results)):
+            results[i] = results[i].get()
+        return [(res[0], res[1]) if res[0] is not None else None for res in results]
+
 
     def run(self, num_threads, debug=False):
         print(f'Run {len(self.tasks)} tasks with {num_threads} threads')
         if num_threads <= 0:
             return
         if debug:
-            task_wrapper(tasks[0])
+            task_wrapper(self.tasks[0])
         else:
-            p = Pool(num_threads)
 
-            results = p.map(task_wrapper, self.tasks, chunksize=1)
+            if self.use_numactl:
+                results = self.numactl_run()
+            else:
+                p = Pool(num_threads)
+                results = p.map(task_wrapper, self.tasks, chunksize=1)
+                p.close()
             phases = []
             count = 0
             for res in results:
@@ -143,5 +226,4 @@ class CptBatchDescription:
                     count += 1
             # print(sorted(phases))
             print(f'Finished {count} simulations')
-            p.close()
 
