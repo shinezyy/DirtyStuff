@@ -3,6 +3,8 @@ import os
 import os.path as osp
 from pprint import pprint
 import hashlib
+import random
+import time
 
 
 class SimulatorTask:
@@ -37,6 +39,10 @@ class SimulatorTask:
         self.avoid_repeat = avoid_repeat
         self.cpt_file = None
         self.valid = True
+
+        self.use_numactl = False
+        self.numa_node = 0
+        self.cores = None
 
     def __hash__(self):
         info = f"{self.code_name}"
@@ -83,13 +89,16 @@ class SimulatorTask:
         if not osp.isdir(d):
             assert not osp.isfile(d)
             os.makedirs(d)
+    
+    def bake_numa_cmd(self):
+        return sh.numactl.bake('-m', self.numa_node, '-C', self.cores)
 
     def run(self):
         assert self.work_dir is not None
         assert self.log_dir is not None
 
         # pprint(self.exe)
-        print(self)
+        # print(self)
         # print('log_dir: ', self.log_dir)
         if self.dry_run:
             return
@@ -112,11 +121,19 @@ class SimulatorTask:
 
         sh.touch(osp.join(self.log_dir, 'running'))
         try:
-            cmd(
-                _out=osp.join(self.log_dir, 'simulator_out.txt'),
-                _err=osp.join(self.log_dir, 'simulator_err.txt'),
-                *self.final_options
-            )
+            if self.use_numactl:
+                numa = self.bake_numa_cmd()
+                numa(cmd,
+                    _out=osp.join(self.log_dir, 'simulator_out.txt'),
+                    _err=osp.join(self.log_dir, 'simulator_err.txt'),
+                    *self.final_options
+                )
+            else:
+                cmd(
+                    _out=osp.join(self.log_dir, 'simulator_out.txt'),
+                    _err=osp.join(self.log_dir, 'simulator_err.txt'),
+                    *self.final_options
+                )
         except Exception as e:
             print(e)
             if osp.isfile(osp.join(self.log_dir, 'running')):
@@ -131,7 +148,18 @@ class SimulatorTask:
 
 def task_wrapper(task: SimulatorTask):
     if task.valid:
+        # print(task.exe)
         task.run()
         return task.workload, task.sub_phase_id
     else:
         return None
+
+def task_wrapper_with_numactl(task: SimulatorTask, node_idx):
+    if task.valid:
+        task.run()    
+        # st = random.randint(0,2)
+        # time.sleep(st)
+        print(task.final_options)
+        return (task.workload, task.sub_phase_id, node_idx)
+    else:
+        return (None, None, node_idx)
