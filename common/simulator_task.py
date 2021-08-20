@@ -44,6 +44,12 @@ class SimulatorTask:
         self.numa_node = 0
         self.cores = None
 
+        self.second_exe = None
+        self.second_dir = None  # relative path
+        self.second_option = None
+        self.second_in_numactl = False
+        self.clean_up_list = []
+
     def __hash__(self):
         info = f"{self.code_name}"
         return int(hashlib.sha256(info.encode()).hexdigest(), base=16)
@@ -89,8 +95,9 @@ class SimulatorTask:
         if not osp.isdir(d):
             assert not osp.isfile(d)
             os.makedirs(d)
-    
+
     def bake_numa_cmd(self):
+        print(f'numactl -m {self.numa_node} -C {self.cores}:')
         return sh.numactl.bake('-m', self.numa_node, '-C', self.cores)
 
     def run(self):
@@ -120,29 +127,61 @@ class SimulatorTask:
         sh.rm(['-f', osp.join(self.log_dir, 'completed')])
 
         sh.touch(osp.join(self.log_dir, 'running'))
+
+        abort = False
         try:
+            print('Main command options:', self.final_options)
             if self.use_numactl:
                 numa = self.bake_numa_cmd()
                 numa(cmd,
-                    _out=osp.join(self.log_dir, 'simulator_out.txt'),
-                    _err=osp.join(self.log_dir, 'simulator_err.txt'),
+                    _out=osp.join(self.log_dir, 'main_out.txt'),
+                    _err=osp.join(self.log_dir, 'main_err.txt'),
                     *self.final_options
                 )
             else:
                 cmd(
-                    _out=osp.join(self.log_dir, 'simulator_out.txt'),
-                    _err=osp.join(self.log_dir, 'simulator_err.txt'),
+                    _out=osp.join(self.log_dir, 'main_out.txt'),
+                    _err=osp.join(self.log_dir, 'main_err.txt'),
                     *self.final_options
                 )
+
+            if self.second_exe is not None:
+                os.chdir(self.second_dir)
+                emu = sh.Command(self.second_exe)
+                print('Secondary command:', self.second_exe, self.second_option)
+                if self.second_in_numactl:
+                    numa = self.bake_numa_cmd()
+                    numa(
+                        emu,
+                        _out=osp.join(self.log_dir, 'second_out.txt'),
+                        _err=osp.join(self.log_dir, 'second_err.txt'),
+                        *self.second_option,
+                    )
+                else:
+                    emu(
+                       _out=osp.join(self.log_dir, 'second_out.txt'),
+                       _err=osp.join(self.log_dir, 'second_err.txt'),
+                       *self.second_option,
+                    )
+
         except Exception as e:
             print(e)
-            if osp.isfile(osp.join(self.log_dir, 'running')):
-                sh.rm(osp.join(self.log_dir, 'running'))
-            sh.touch(osp.join(self.log_dir, 'aborted'))
-            return
+            abort = True
+
+        os.chdir(self.work_dir)
+
+        for dirty_file in self.clean_up_list:
+            if osp.isfile(dirty_file) or osp.isdir(dirty_file):
+                sh.rm(['-rf', dirty_file])
+
         if osp.isfile(osp.join(self.log_dir, 'running')):
             sh.rm(osp.join(self.log_dir, 'running'))
-        sh.touch(osp.join(self.log_dir, 'completed'))
+
+        if not abort:
+            sh.touch(osp.join(self.log_dir, 'completed'))
+        else:
+            sh.touch(osp.join(self.log_dir, 'aborted'))
+
         return
 
 
@@ -156,7 +195,7 @@ def task_wrapper(task: SimulatorTask):
 
 def task_wrapper_with_numactl(task: SimulatorTask, node_idx):
     if task.valid:
-        task.run()    
+        task.run()
         # st = random.randint(0,2)
         # time.sleep(st)
         print(task.final_options)

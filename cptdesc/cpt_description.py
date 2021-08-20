@@ -91,29 +91,57 @@ class CptBatchDescription:
         if self.args.workload is not None:
             self.workload_filter = self.args.workload
             print(self.workload_filter)
-    
-    def set_numactl_status(self):
+
+    def clear_numactl_status(self):
         self.numactl_status_list = [Value(c_bool, lock=True) for i in range(len(self.numactl_prefixes))]
         for st in self.numactl_status_list:
             st.value = False
 
-    def set_numactl_prefixes(self, avoid_cores=[]):
+    def init_numactl_prefixes(self, avoid_cores=None, selected_cores=None):
+        assert (avoid_cores is None) ^ (selected_cores is None)
         num_numa_nodes = 2
         num_physical_cores = 128
         emu_thread = 4
         cores_per_node = int(num_physical_cores / num_numa_nodes)
-        per_node_confs = [[[n, i] for i in range(n*cores_per_node,(n+1)*cores_per_node,emu_thread)] for n in range(num_numa_nodes)]
+        per_node_confs = [[[n, i]
+            for i in range(n*cores_per_node,(n+1)*cores_per_node,emu_thread)]
+            for n in range(num_numa_nodes)]
         confs = []
         for pnc in per_node_confs:
             confs += pnc
-        self.numactl_prefixes = [{'node': node, 'cores': str(core) + '-' + str(core+emu_thread-1)} for [node, core] in confs if core not in avoid_cores]
+        if avoid_cores is not None:
+            self.numactl_prefixes = [{'node': node, 'cores': str(core) + '-' + str(core+emu_thread-1)}
+                    for [node, core] in confs if core not in avoid_cores]
+        else:
+            self.numactl_prefixes = [{'node': node, 'cores': str(core) + '-' + str(core+emu_thread-1)}
+                    for [node, core] in confs if core in selected_cores]
 
-    def set_numactl(self, avoid_cores=[]):
+    def init_numactl_prefixes_for_smt_warmup(self, avoid_cores=None, selected_cores=None):
+        assert (avoid_cores is None) ^ (selected_cores is None)
+        num_numa_nodes = 2
+        num_physical_cores = 128
+        emu_thread = 1
+        for c in range(0, num_physical_cores):
+            if avoid_cores is not None:
+                if c in avoid_cores:
+                    continue
+            else:
+                if c not in selected_cores:
+                    continue
+            smt_twin = c + num_physical_cores
+            node = int(c // (num_physical_cores/num_numa_nodes))
+            self.numactl_prefixes.append({'node': node, 'cores': f'{c},{smt_twin}'})
+
+    def set_numactl(self, avoid_cores=None, selected_cores=None, st_emu_with_smt_warmup=False):
+        assert (avoid_cores is None) ^ (selected_cores is None)
         self.use_numactl = True
-        self.set_numactl_prefixes(avoid_cores)
-        self.set_numactl_status()
-        # print(self.numactl_prefixes)
-        # print(self.numactl_status_list)
+        if not st_emu_with_smt_warmup:
+            self.init_numactl_prefixes(
+                    avoid_cores = avoid_cores, selected_cores = selected_cores)
+        else:
+            self.init_numactl_prefixes_for_smt_warmup(
+                    avoid_cores = avoid_cores, selected_cores = selected_cores)
+        self.clear_numactl_status()
 
     def filter_tasks(self, hashed=False, n_machines=0, task_type='xiangshan'):
         for task in self._tasks:
@@ -143,7 +171,7 @@ class CptBatchDescription:
                         task.valid = True
                 if not task.valid:
                     continue
-            
+
             if task.code_name not in self.task_whitelist:
                 task.valid = False
 
@@ -158,7 +186,7 @@ class CptBatchDescription:
                 task.dry_run = True
             self.tasks.append(task)
         random.shuffle(self.tasks)
-    
+
     def numactl_run(self):
         def clear_status(self):
             st_l = self.numactl_status_list
@@ -195,13 +223,12 @@ class CptBatchDescription:
                     break
                 else:
                     time.sleep(1)
-        
+
         p.close()
         p.join()
         for i in range(len(results)):
             results[i] = results[i].get()
         return [(res[0], res[1]) if res[0] is not None else None for res in results]
-
 
     def run(self, num_threads, debug=False):
         print(f'Run {len(self.tasks)} tasks with {num_threads} threads')
@@ -210,7 +237,6 @@ class CptBatchDescription:
         if debug:
             task_wrapper(self.tasks[0])
         else:
-
             if self.use_numactl:
                 results = self.numactl_run()
             else:
