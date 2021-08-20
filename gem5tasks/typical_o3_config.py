@@ -282,3 +282,22 @@ class OmegaH1S1G1B8Config(OmegaH1S1G1Config):  # O1 B8
                 '--dq-banks': 8,
                 }
         self.add_dict_options(self.omega_dict)
+
+class Functional4XSConfig(SimulatorTask):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+
+        self.list_conf = [
+                '--caches',
+                '--l2cache',
+                '--l3_cache',
+                ]
+        self.add_list_options(self.list_conf)
+
+        self.dict_conf = {
+                '--cpu-type': 'NemuCPU',
+                '--mem-size': '8GB',
+                '--l2_size': '512kB',
+                '--l3_size': '4MB',
+                }
+        self.add_dict_options(self.dict_conf)
