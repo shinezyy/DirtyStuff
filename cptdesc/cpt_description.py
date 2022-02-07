@@ -10,7 +10,8 @@ import load_balance as lb
 from common import task_blacklist
 from common import *
 from common.task_tree import task_tree_to_batch_task
-from common.simulator_task import task_wrapper, task_wrapper_with_numactl
+from common.simulator_task import SimulatorTask, task_wrapper, task_wrapper_with_numactl
+from typing import List, Set, Dict, Tuple, Optional
 
 class CptBatchDescription:
     def __init__(self, data_dir, exe, top_output_dir, ver,
@@ -40,9 +41,10 @@ class CptBatchDescription:
             for workload in simpoints:
                 for key in simpoints[workload]:
                     self.task_whitelist.append(f'{workload}_{key}')
+            print('White list given by SimPoints.json', self.task_whitelist)
 
         self._tasks = None
-        self.tasks = []
+        self.tasks: List[SimulatorTask] = []
 
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('-T', '--task', action='store', nargs='+')
@@ -174,6 +176,9 @@ class CptBatchDescription:
 
             if task.code_name not in self.task_whitelist:
                 task.valid = False
+            else:
+                print('Pick', task.code_name)
+                task.valid = True
 
             if hashed:
                 hash_buckets, n_buckets = lb.get_machine_hash(task_type)
@@ -184,7 +189,8 @@ class CptBatchDescription:
 
             if self.args.dry_run:
                 task.dry_run = True
-            self.tasks.append(task)
+            if task.valid:
+                self.tasks.append(task)
         random.shuffle(self.tasks)
 
     def numactl_run(self):

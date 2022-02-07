@@ -61,6 +61,8 @@ def find_nemu_uniform_cpts(d: str, workload_filter=None,
 def find_nemu_simpoint_cpts(d: str):
     TaskSummary = {}
     for simpoint in os.listdir(d):
+        if osp.isfile(osp.join(d, simpoint)):
+            continue
         segments = simpoint.split('_')
         inst_count = segments[-2]
         workload = segments[:-2]

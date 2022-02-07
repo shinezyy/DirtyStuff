@@ -22,6 +22,7 @@ class SimulatorTask:
 
         self.work_dir = None
         self.log_dir = None
+        self.extra_dir = None
 
         # print(top_data_dir)
         assert osp.isdir(top_data_dir)
@@ -55,7 +56,11 @@ class SimulatorTask:
         return int(hashlib.sha256(info.encode()).hexdigest(), base=16)
 
     def __str__(self):
-        return str([self.code_name, self.exe] + self.final_options)
+        info = f'Task Codename: {self.code_name}, ELF: {self.exe}, Workdir: {self.work_dir},\nNumaCtl: {self.use_numactl}, '
+        if self.use_numactl:
+            info += f'Numa node: {self.numa_node}, core: {self.cores}\n'
+        info += f'Options: {self.final_options}\n'
+        return info
 
     def set_workload(self, workload: str):
         self.workload = workload
@@ -108,9 +113,12 @@ class SimulatorTask:
         # print(self)
         # print('log_dir: ', self.log_dir)
         if self.dry_run:
+            print(self.__str__())
             return
         self.check_and_makedir(self.log_dir)
         self.check_and_makedir(self.work_dir)
+        if self.extra_dir is not None:
+            self.check_and_makedir(self.extra_dir)
 
         os.chdir(self.work_dir)
 
@@ -193,12 +201,11 @@ def task_wrapper(task: SimulatorTask):
     else:
         return None
 
-def task_wrapper_with_numactl(task: SimulatorTask, node_idx):
+def task_wrapper_with_numactl(task: SimulatorTask, node_idx, dry=False):
     if task.valid:
         task.run()
         # st = random.randint(0,2)
         # time.sleep(st)
-        print(task.final_options)
         return (task.workload, task.sub_phase_id, node_idx)
     else:
         return (None, None, node_idx)
