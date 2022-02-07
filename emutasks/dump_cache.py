@@ -9,11 +9,16 @@ from emutasks import EmuTasksConfig
 
 debug = False
 
+''' Example usage:
+export PYTHONPATH=`pwd`:$PYTHONPATH
+python3 emutasks/dump_cache.py
+
+Note that the number of numa nodes and emu threads is hard-cored in function init_numactl_prefixes
+'''
 ver = '06'
 xs_base = '/local_storage/hanboyang/xs-env/XiangShan'
 exe = f'{xs_base}/build/emu'
 data_dir = f'/nfs/home/share/checkpoints_profiles/spec{ver}_rv64gc_o2_50m/take_cpt' # cpt dir
-# top_output_dir = f'{lc.local_result_top}/xs_cache_io_dump/' # output dir
 top_output_dir = f'/local_storage/zhouyaoyang/dump-results/' # output dir
 
 workload_filter = []
@@ -47,6 +52,7 @@ for task in cpt_desc.tasks:
     task.set_trivial_workdir()
     task.avoid_repeat = True
     task.extra_dir = osp.join(task.work_dir, 'build/trace')
+    # Toggle this to check your configuration before real execution
     # task.dry_run = True
 
     task.add_direct_options(['--no-diff'])
@@ -60,6 +66,7 @@ for task in cpt_desc.tasks:
     task.format_options(space=True)
 
 
+# the number of numa nodes and emu threads is hard-cored in function init_numactl_prefixes
 cpt_desc.set_numactl(st_emu_with_smt_warmup=False, selected_cores=np.arange(64, 99, 1))
 cpt_desc.numactl_run()
 
