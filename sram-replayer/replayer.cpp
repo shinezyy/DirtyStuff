@@ -35,12 +35,12 @@ int main() {
 		case 1: // config header
 			break;
 		case 2:	// config
-			name = strtok(line, ",");
-			printf("name: %s\n", name);
+			name = strdup(strtok(line, ","));
+			printf(">%s< ", name);
 			width = atoi(strtok(NULL, ","));
-			printf("width: %d\n", width);
+			printf("w=%d ", width);
 			depth = atoi(strtok(NULL, ","));
-			printf("depth: %d\n", depth);
+			printf("d=%d\n", depth);
 			m.resize(depth);
 			break;
 		case 3:	// data header
@@ -65,6 +65,12 @@ int main() {
 		}
 	}
 
+	char *file;
+	asprintf(&file, "build/trace/%s.hex", name);
+	free(name);
+	FILE *o = fopen(file, "w");
+	free(file);
+
 	for (auto d : m) {
 		/* // bin
 		for (auto i = width - 1; i >= 0; i--) {
@@ -76,7 +82,7 @@ int main() {
 		// hex
 		char *fmt;
 		asprintf(&fmt, "%%0%dlX\n", (width + 3) / 4);
-		printf(fmt, d);
+		fprintf(o, fmt, d);
 		free(fmt);
 	}
 	return 0;
