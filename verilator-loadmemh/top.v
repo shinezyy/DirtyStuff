@@ -13,6 +13,7 @@ module top (
 
 	initial begin
 		$display("Hello!");
+		$display($test$plusargs("HELLO"));
 		$readmemh("rom.hex", dut.arr);
 	end
 endmodule
