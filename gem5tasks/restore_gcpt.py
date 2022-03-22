@@ -6,35 +6,43 @@ from common import local_config as lc
 from cptdesc import CptBatchDescription
 import gem5tasks.typical_o3_config as tc
 
-# `GEM5` 自动化测试
-
-# CurConf = TypicalO3Config
-# CurConf = tc.OmegaH1S1G1Config
-# CurConf = tc.OmegaH1S1G2Config
-# CurConf = tc.OmegaH1S1G2CL0Config
-# CurConf = tc.OmegaH1S1G1B8Config
-# CurConf = FullWindowO3Config
-
-# CurConf = tc.FF128G2Config
-# CurConf = tc.FFH1Config
-# CurConf = tc.FFG2Config
-# CurConf = tc.FFG2CL0CG1Config
+# `GEM5` Batch execution
+# Known issue: Ctrl+C will not kill the python script but not GEM5 threads;
+# So, when you want to stop batch running
+# 1. Ctrl + C to kill the script
+# 2. killall -15 gem5.opt or gem5.fast to kill all launched threads
 
 debug = False
+
+# The number of threads
 num_threads = 1
 
+# SPEC 17 or 06
 ver = '17'
-gem5_base = '/home51/zyy/projects/omegaflow'
+
+# The root dir of GEM5
+gem5_base = '/path/to/gem5/root'
 exe = f'{gem5_base}/build/RISCV/gem5.opt'
 fs_script = f'{gem5_base}/configs/example/fs.py'
-data_dir = f'/home51/zyy/expri_results/nemu_take_simpoint_cpt_{ver}/' # cpt dir
-top_output_dir = '/home51/zyy/expri_results/' # cpt dir
 
-workload_filter = []
+# The root dir of RISC-V Generic checkpoints
+# The RISC-V Generic checkpoint format is defined by Xiangshan Team
+# Brief introduction here:
+# https://github.com/OpenXiangShan/XiangShan-doc/blob/main/tutorial/others/Checkpoint%E7%9A%84%E7%94%9F%E6%88%90.md
+data_dir = '/path/to/RISC-V/GCPT/checkpoints/' # cpt dir
+
+# The directory to store GEM5 outputs (logs, configs, and stats)
+top_output_dir = '/path/to/the top of gem5 results/' # cpt dir
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
-        is_simpoint=True,
-        simpoints_file=lc.simpoints_file[ver])
+        is_simpoint=True,  # Set it True when you are using checkpoints taken with NEMU and SimPoint method
+        is_uniform=False,  # Set it False unless you carefully read the source code of this project
+
+        # This option chooses the checkpoint filter
+        # The checkpoint filter indicates whick checkpoints should be executed
+        # The checkpoint filter is loaded from a json file, to local_config.py to see details
+        simpoints_file=lc.simpoints_file_short[ver],
+        )
 
 parser = cpt_desc.parser
 
@@ -44,9 +52,12 @@ parser.add_argument('-C', '--config', action='store', type=str)
 args = cpt_desc.parse_args()
 
 if args.config is not None:
+    # You can input the config from command line
+    # Example configs are defined in typical_o3_config.py
     CurConf = eval(f'tc.{args.config}')
 else:
     CurConf = tc.FullWindowO3Config
+
 task_name = f'test_new_wrapper{ver}/{CurConf.__name__}'
 cpt_desc.set_task_filter()
 cpt_desc.set_conf(CurConf, task_name)
@@ -81,7 +92,6 @@ for task in cpt_desc.tasks:
     task.set_trivial_workdir()
     task.avoid_repeat = True
 
-
     if len(debug_flags):
         df_str = '--debug-flags=' + ','.join(debug_flags)
         task.add_direct_options([df_str])
@@ -94,11 +104,18 @@ for task in cpt_desc.tasks:
             f'--debug-end={end}',
             ])
 
-    task.add_direct_options([fs_script])
+    task.add_direct_options([fs_script]) # direct_options are passed to gem5.opt
+
+    # dict_options are passed to fs.py
     task.add_dict_options({
         '--mem-size': '8GB',
         '--generic-rv-cpt': task.cpt_file,
+
+        # This option provides us a method to override the "GCPT restorer" when loading
+        # the RISC-V generic checkpoint.
+        # resource/gcpt_restore can be found in https://github.com/OpenXiangShan/NEMU/tree/cpp-gem5
         '--gcpt-restorer': '/home/zyy/projects/NEMU/resource/gcpt_restore/build/gcpt.bin',
+
         # '--benchmark-stdout': osp.join(task.log_dir, 'workload_out.txt'),
         # '--benchmark-stderr': osp.join(task.log_dir, 'workload_err.txt'),
         '--maxinsts': str(100*10**6),

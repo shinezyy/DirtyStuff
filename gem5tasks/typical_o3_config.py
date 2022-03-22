@@ -11,7 +11,7 @@ class TypicalCoreConfig(SimulatorTask):
             '--caches',
             '--l2cache',
             '--l3_cache',
-            '--enable-loop-buffer',
+            # '--enable-loop-buffer',
         ]
 
         self.core_dict = {
