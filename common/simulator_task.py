@@ -1,4 +1,7 @@
 import sh
+import subprocess
+import signal
+import sys
 import os
 import os.path as osp
 from pprint import pprint
@@ -122,8 +125,6 @@ class SimulatorTask:
 
         os.chdir(self.work_dir)
 
-        cmd = sh.Command(self.exe)
-
         if self.avoid_repeat and osp.isfile(osp.join(self.log_dir, 'completed')):
             print(f'{self.workload}_{self.sub_phase_id} has completed')
             return
@@ -131,14 +132,15 @@ class SimulatorTask:
             print(f'{self.workload}_{self.sub_phase_id} is running')
             return
 
-        sh.rm(['-f', osp.join(self.log_dir, 'aborted')])
-        sh.rm(['-f', osp.join(self.log_dir, 'completed')])
-
-        sh.touch(osp.join(self.log_dir, 'running'))
+        subprocess.run(['rm', '-f', osp.join(self.log_dir, 'aborted')]);
+        subprocess.run(['rm', '-f', osp.join(self.log_dir, 'completed')]);
+        subprocess.run(['touch', osp.join(self.log_dir, 'running')]);
 
         abort = False
         try:
-            print('Main command options:', self.final_options)
+            runCommand = self.exe + " " + " ".join(self.final_options)
+            print('Command:', runCommand)
+            # print('Main command options:', self.final_options)
             if self.use_numactl:
                 numa = self.bake_numa_cmd()
                 numa(cmd,
@@ -147,11 +149,27 @@ class SimulatorTask:
                     *self.final_options
                 )
             else:
-                cmd(
-                    _out=osp.join(self.log_dir, 'main_out.txt'),
-                    _err=osp.join(self.log_dir, 'main_err.txt'),
-                    *self.final_options
+                main_out = open(osp.join(self.log_dir, 'main_out.txt'), "w")
+                main_err = open(osp.join(self.log_dir, 'main_err.txt'), "w")
+                proc = subprocess.Popen(
+                    runCommand,
+                    stdout=main_out,
+                    stderr=main_err,
+                    shell=True,
+                    preexec_fn=os.setsid
                 )
+
+                def signal_handler(signal, frame):
+                    abort = True
+                    if osp.isfile(osp.join(self.log_dir, 'running')):
+                        os.remove(osp.join(self.log_dir, 'running'))
+                    os.mknod(osp.join(self.log_dir, 'aborted'))
+                    print("kill process successfully!")
+                    os.killpg(os.getpgid(proc.pid), 15)
+                    sys.exit()
+
+                signal.signal(signal.SIGINT, signal_handler)
+                proc.wait()
 
             if self.second_exe is not None:
                 os.chdir(self.second_dir)
@@ -180,15 +198,15 @@ class SimulatorTask:
 
         for dirty_file in self.clean_up_list:
             if osp.isfile(dirty_file) or osp.isdir(dirty_file):
-                sh.rm(['-rf', dirty_file])
+                subprocess.run(['rm', '-rf', dirty_file]);
 
         if osp.isfile(osp.join(self.log_dir, 'running')):
-            sh.rm(osp.join(self.log_dir, 'running'))
+            subprocess.run(['rm', osp.join(self.log_dir, 'running')]);
 
         if not abort:
-            sh.touch(osp.join(self.log_dir, 'completed'))
+            subprocess.run(['touch', osp.join(self.log_dir, 'completed')]);
         else:
-            sh.touch(osp.join(self.log_dir, 'aborted'))
+            subprocess.run(['touch', osp.join(self.log_dir, 'aborted')]);
 
         return
 
