@@ -10,7 +10,7 @@ class TypicalCoreConfig(SimulatorTask):
         self.list_conf = [
             '--caches',
             '--l2cache',
-            '--l3_cache',
+            '--l3cache',
             # '--enable-loop-buffer',
         ]
 
@@ -85,7 +85,7 @@ class Smarts8WO3Config(Typical8WO3Config):
                 }
         self.add_dict_options(self.mem_dict)
         self.list_options.remove(
-                '--l3_cache',
+                '--l3cache',
                 )
 
 
@@ -290,7 +290,7 @@ class Functional4XSConfig(SimulatorTask):
         self.list_conf = [
                 '--caches',
                 '--l2cache',
-                '--l3_cache',
+                '--l3cache',
                 ]
         self.add_list_options(self.list_conf)
 
