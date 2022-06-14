@@ -141,7 +141,6 @@ class SimulatorTask:
             runCommand = self.exe + " " + " ".join(self.final_options)
             print('Command:', runCommand)
             print('Main command options:', self.final_options)
-            # exit()
 
             def signal_handler_wrapper(proc):
                 def signal_handler(signal, frame):
@@ -151,10 +150,8 @@ class SimulatorTask:
                     if not osp.isfile(osp.join(self.log_dir, 'aborted')):
                         os.mknod(osp.join(self.log_dir, 'aborted'))
                     print("kill process successfully!")
-                    # print(os.getpgid(proc.pid))
                     print(os.getpgid(proc.pid))
                     os.killpg(os.getpgid(proc.pid), 15)
-                    # proc.terminate()
                     return
                 return signal_handler
 
@@ -201,7 +198,6 @@ class SimulatorTask:
             self.abort = True
 
         os.chdir(self.work_dir)
-        # print("cleaning status files")
 
         for dirty_file in self.clean_up_list:
             if osp.isfile(dirty_file) or osp.isdir(dirty_file):
@@ -214,7 +210,6 @@ class SimulatorTask:
             subprocess.run(['touch', osp.join(self.log_dir, 'completed')]);
         else:
             subprocess.run(['touch', osp.join(self.log_dir, 'aborted')]);
-        # print("returning")
         return
 
 
