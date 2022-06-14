@@ -136,40 +136,46 @@ class SimulatorTask:
         subprocess.run(['rm', '-f', osp.join(self.log_dir, 'completed')]);
         subprocess.run(['touch', osp.join(self.log_dir, 'running')]);
 
-        abort = False
+        self.abort = False
         try:
             runCommand = self.exe + " " + " ".join(self.final_options)
             print('Command:', runCommand)
-            # print('Main command options:', self.final_options)
-            if self.use_numactl:
-                numa = self.bake_numa_cmd()
-                numa(cmd,
-                    _out=osp.join(self.log_dir, 'main_out.txt'),
-                    _err=osp.join(self.log_dir, 'main_err.txt'),
-                    *self.final_options
-                )
-            else:
-                main_out = open(osp.join(self.log_dir, 'main_out.txt'), "w")
-                main_err = open(osp.join(self.log_dir, 'main_err.txt'), "w")
-                proc = subprocess.Popen(
-                    runCommand,
-                    stdout=main_out,
-                    stderr=main_err,
-                    shell=True,
-                    preexec_fn=os.setsid
-                )
+            print('Main command options:', self.final_options)
+            # exit()
 
+            def signal_handler_wrapper(proc):
                 def signal_handler(signal, frame):
-                    abort = True
+                    self.abort = True
                     if osp.isfile(osp.join(self.log_dir, 'running')):
                         os.remove(osp.join(self.log_dir, 'running'))
-                    os.mknod(osp.join(self.log_dir, 'aborted'))
+                    if not osp.isfile(osp.join(self.log_dir, 'aborted')):
+                        os.mknod(osp.join(self.log_dir, 'aborted'))
                     print("kill process successfully!")
+                    # print(os.getpgid(proc.pid))
+                    print(os.getpgid(proc.pid))
                     os.killpg(os.getpgid(proc.pid), 15)
-                    sys.exit()
+                    # proc.terminate()
+                    return
+                return signal_handler
 
-                signal.signal(signal.SIGINT, signal_handler)
-                proc.wait()
+
+            if self.use_numactl:
+                runCommand = "numactl" + f" -m {self.numa_node} -C {self.cores} " + runCommand
+
+            print(runCommand)
+            main_out = open(osp.join(self.log_dir, 'main_out.txt'), "w")
+            main_err = open(osp.join(self.log_dir, 'main_err.txt'), "w")
+            proc = subprocess.Popen(
+                runCommand,
+                stdout=main_out,
+                stderr=main_err,
+                shell=True,
+                preexec_fn=os.setsid
+            )
+
+            signal.signal(signal.SIGINT, signal_handler_wrapper(proc))
+            signal.signal(signal.SIGTERM, signal_handler_wrapper(proc))
+            proc.wait()
 
             if self.second_exe is not None:
                 os.chdir(self.second_dir)
@@ -192,9 +198,10 @@ class SimulatorTask:
 
         except Exception as e:
             print(e)
-            abort = True
+            self.abort = True
 
         os.chdir(self.work_dir)
+        # print("cleaning status files")
 
         for dirty_file in self.clean_up_list:
             if osp.isfile(dirty_file) or osp.isdir(dirty_file):
@@ -203,11 +210,11 @@ class SimulatorTask:
         if osp.isfile(osp.join(self.log_dir, 'running')):
             subprocess.run(['rm', osp.join(self.log_dir, 'running')]);
 
-        if not abort:
+        if not self.abort:
             subprocess.run(['touch', osp.join(self.log_dir, 'completed')]);
         else:
             subprocess.run(['touch', osp.join(self.log_dir, 'aborted')]);
-
+        # print("returning")
         return
 
 
@@ -221,9 +228,14 @@ def task_wrapper(task: SimulatorTask):
 
 def task_wrapper_with_numactl(task: SimulatorTask, node_idx, dry=False):
     if task.valid:
-        task.run()
-        # st = random.randint(0,2)
-        # time.sleep(st)
-        return (task.workload, task.sub_phase_id, node_idx)
+        try:
+            task.run()
+            # st = random.randint(0,2)
+            # time.sleep(st)
+            # print("returning from task wrapper")
+            return (task.workload, task.sub_phase_id, node_idx)
+        except Exception as e:
+            print(e)
+            return (None, None, node_idx)
     else:
         return (None, None, node_idx)
