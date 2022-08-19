@@ -182,6 +182,10 @@ class SimulatorTask:
             signal.signal(signal.SIGTERM, signal_handler_wrapper(proc))
             proc.wait()
 
+                if proc.returncode is not None and proc.returncode != 0:
+                    abort = True
+
+
             if self.second_exe is not None:
                 os.chdir(self.second_dir)
                 emu = sh.Command(self.second_exe)
