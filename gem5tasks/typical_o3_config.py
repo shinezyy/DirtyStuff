@@ -301,3 +301,54 @@ class Functional4XSConfig(SimulatorTask):
                 '--l3_size': '4MB',
                 }
         self.add_dict_options(self.dict_conf)
+
+class NanhuConfig(SimulatorTask):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--caches',
+                '--l2cache',
+                '--l3cache',
+                '--enable-difftest',
+                '--xiangshan'
+                ]
+        self.add_list_options(self.list_conf)
+        self.dict_conf = {
+                '--cpu-type': 'DerivO3CPU',
+                '--mem-type': 'DDR3_1600_8x8',
+                '--mem-size': '8GB',
+                '--cacheline_size': 64,
+                '--l1i_size': '128kB',
+                '--l1i_assoc': 8,
+                '--l1d_size': '128kB',
+                '--l1d_assoc': 8,
+                '--l2_size': '1MB',
+                '--l2_assoc': 8,
+                '--l3_size': '6MB',
+                '--l3_assoc': 6,
+                }
+        self.add_dict_options(self.dict_conf)
+
+class L2AsL1(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_dict_options({
+                '--l1d_size': '176kB',
+                '--l1d_assoc': 11,
+                '--l2_size': '1024kB',
+                '--l2_assoc': 8,
+            })
+
+class SimpleBTB(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_dict_options({
+                '--indirect-bp-type': 'SimpleIndirectPredictor',
+            })
+
+class ITTAGE(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_dict_options({
+                '--indirect-bp-type': 'ITTAGE',
+            })
