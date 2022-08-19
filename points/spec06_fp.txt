@@ -1,0 +1,17 @@
+bwaves
+gamess
+milc
+zeusmp
+gromacs
+cactusADM
+leslie3d
+namd
+dealII
+soplex
+povray
+Calculix
+GemsFDTD
+tonto
+lbm
+wrf
+sphinx3
