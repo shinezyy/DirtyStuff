@@ -21,7 +21,7 @@ class CptBatchDescription:
             is_uniform=True,
             is_sparse_uniform=False,
             exe_threads=8,
-            use_numa=True
+            use_numa=False
             ):
 
         self.task_whitelist = []

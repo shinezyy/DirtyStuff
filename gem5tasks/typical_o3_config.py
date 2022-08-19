@@ -302,13 +302,12 @@ class Functional4XSConfig(SimulatorTask):
                 }
         self.add_dict_options(self.dict_conf)
 
-class NanhuConfig(SimulatorTask):
+class NanhuNoL3(SimulatorTask):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
         self.list_conf = [
                 '--caches',
                 '--l2cache',
-                '--l3cache',
                 '--enable-difftest',
                 '--xiangshan'
                 ]
@@ -324,6 +323,18 @@ class NanhuConfig(SimulatorTask):
                 '--l1d_assoc': 8,
                 '--l2_size': '1MB',
                 '--l2_assoc': 8,
+                }
+        self.add_dict_options(self.dict_conf)
+
+
+class NanhuConfig(NanhuNoL3):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--l3cache',
+                ]
+        self.add_list_options(self.list_conf)
+        self.dict_conf = {
                 '--l3_size': '6MB',
                 '--l3_assoc': 6,
                 }
