@@ -183,7 +183,7 @@ class SimulatorTask:
             proc.wait()
 
             if proc.returncode is not None and proc.returncode != 0:
-                abort = True
+                self.abort = True
 
             if self.second_exe is not None:
                 os.chdir(self.second_dir)
