@@ -326,8 +326,17 @@ class NanhuNoL3(SimulatorTask):
                 }
         self.add_dict_options(self.dict_conf)
 
+class NanhuWithRationalL1NoL3(NanhuNoL3):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.dict_conf = {
+                '--l1i_size': '64kB',
+                '--l1d_size': '64kB',
+                }
+        self.add_dict_options(self.dict_conf)
 
-class NanhuConfig(NanhuNoL3):
+
+class NanhuConfig(NanhuWithRationalL1NoL3):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
         self.list_conf = [
@@ -337,6 +346,32 @@ class NanhuConfig(NanhuNoL3):
         self.dict_conf = {
                 '--l3_size': '6MB',
                 '--l3_assoc': 6,
+                }
+        self.add_dict_options(self.dict_conf)
+
+class Nanhu32kIC(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.dict_conf = {
+                '--l1i_assoc': 4,
+                '--l1i_size': '32kB',
+                '--l1i-hwp-type': 'FDIP',
+                }
+        self.add_dict_options(self.dict_conf)
+
+class Nanhu32kICwithPIF(Nanhu32kIC):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.dict_conf = {
+                '--l1i-hwp-type': 'PIFPrefetcher',
+                }
+        self.add_dict_options(self.dict_conf)
+
+class NanhuHugeL1(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.dict_conf = {
+                '--l1i_size': '1MB',
                 }
         self.add_dict_options(self.dict_conf)
 
@@ -362,4 +397,19 @@ class ITTAGE(NanhuConfig):
         super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
         self.add_dict_options({
                 '--indirect-bp-type': 'ITTAGE',
+            })
+class TBPConfig(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_dict_options({
+                '--indirect-bp-type': 'ITTAGE',
+                '--bp-type': 'LTAGE',
+            })
+
+class TBP32KIC(TBPConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_dict_options({
+                '--l1i_size': '32kB',
+                '--l1i_assoc': 4,
             })
